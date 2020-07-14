@@ -1,32 +1,19 @@
 const request = require("request");
 const cheerio = require("cheerio");
 const xl = require("excel4node");
+const fs = require("fs");
 let wb = new xl.Workbook();
 let sheet = wb.addWorksheet("Sheet 1");
 var nodemailer = require("nodemailer");
 require("dotenv").config();
 
-//Configuring mail service
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: process.env.EMAIL,
-//     pass: process.env.PASSWORD,
-//   },
-// });
-
-// const mailOption = {
-//   from: process.env.EMAIL,
-//   to: process.env.EMAIL,
-//   text: "hi",
-// };
-
-// transporter.sendMail(mailOption, (error, info) => {
-//   if (error) console.log(error.message);
-//   else {
-//     console.log("Email send to " + info.response);
-//   }
-// });
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD,
+  },
+});
 
 const url =
   "https://myshop.pk/mobiles-smartphones-tablets?product_list_limit=64";
@@ -58,4 +45,19 @@ const excelOperation = (data) => {
     sheet.cell(i + 1, 2).string(data[i].price);
   }
   wb.write("Excel.xlsx");
+  setTimeout(() => {
+    fs.readFile("./Excel.xlsx", (err, data) => {
+      // console.log(data);
+      transporter
+        .sendMail({
+          sender: process.env.EMAIL,
+          to: process.env.EMAIL,
+          subject: "Attachment!",
+          body: "mail content...",
+          attachments: [{ filename: "Excel.xlsx", content: data }],
+        })
+        .then((response) => console.log(response))
+        .catch((err) => console.log(err));
+    });
+  }, 2000);
 };
